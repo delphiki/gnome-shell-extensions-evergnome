@@ -1,8 +1,3 @@
 {
-    "errors": [
-        {
-            "filter": "network-no-internet",
-            "message": "No internet access"
-        }
-    ]
+    "errors": []
 }

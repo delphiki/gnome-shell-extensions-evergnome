@@ -14,6 +14,9 @@ const PopupMenu = imports.ui.popupMenu;
 const ModalDialog = imports.ui.modalDialog;
 
 const Local = imports.misc.extensionUtils.getCurrentExtension();
+
+const _ = imports.gettext.domain(Local.metadata['gettext-domain']).gettext;
+
 const EvergnomeUtils = Local.imports.evergnomeUtils;
 
 const EvergnomePanelMenu = new Lang.Class(
@@ -22,39 +25,43 @@ const EvergnomePanelMenu = new Lang.Class(
 	Extends: PanelMenu.SystemStatusButton,
     _extensionPath: null,
 
-    _init: function(extensionPath)
+    _init: function()
     {
         // set icon
-        this._extensionPath = extensionPath;
+        this._extensionPath = Local.path.toString() + "/";
     	this.parent('emblem-cm-symbolic');
     	let gicon = new Gio.FileIcon({ file: Gio.file_new_for_path(GLib.build_filenamev([this._extensionPath, 'icons/evergnome.png']))});
     	this.setGIcon(gicon);
 
         // define class member variables
+        // define mainloop
         this._mainloop = null;
+        // stuff
         this._title = null;
         this._settings = null;
         this._manual_update = null;
         this._about = null;
-        this._about_modal = null;
 
-        // build menu
-        this._build_menu_pre();
-        this._build_menu_post();
+        // set data vars
+        this._data_notebooks = EvergnomeUtils.getNotebookJsonData();
+
+        // setup file monitor
+        this._notebooks_monitor = null;
+        this._setup_file_monitor();
+
+        // build menu and synch data
+        this._build_menu();
+        this._notebooks_file_changed();
+        this._sync_data_notebooks();
     },
 
     _build_menu_pre: function()
     {
         this.menu.removeAll();
-
         // main title
         this._title = new PopupMenu.PopupSwitchMenuItem(_("EverGnome"), { reactive: false });
         this._title.setStatus("");
         this.menu.addMenuItem(this._title);
-
-        // separator
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
     },
 
     _build_menu_post: function()
@@ -69,6 +76,7 @@ const EvergnomePanelMenu = new Lang.Class(
 
         // manual update
         this._manual_update = new PopupMenu.PopupMenuItem(_("Manual Update"));
+        this._manual_update.connect("activate", Lang.bind(this, this._manual_update_synch));
         this.menu.addMenuItem(this._manual_update);
 
         // separator
@@ -78,6 +86,23 @@ const EvergnomePanelMenu = new Lang.Class(
         this._about = new PopupMenu.PopupMenuItem(_("About"));
         this._about.connect("activate", Lang.bind(this, this._about_callback));
         this.menu.addMenuItem(this._about);
+    },
+
+    _build_menu: function()
+    {
+        // build menu
+        this._build_menu_pre();
+        this._build_menu_notebooks();
+        this._build_menu_post();
+    },
+
+    _destroy_menu: function()
+    {
+        for (let i = 0; i < this.menu.numMenuItems; i++)
+        {
+            this.menu._getMenuItems()[i].destroy();
+        }
+        this.menu.removeAll();
     },
 
     _settings_callback: function()
@@ -91,106 +116,128 @@ const EvergnomePanelMenu = new Lang.Class(
 
     _about_callback: function()
     {
-        if(!this._about_modal)
-        {
-            // create modal
-            this._about_modal = new ModalDialog.ModalDialog({ styleClass: 'run-dialog-label' });
-
-            // create dialog content
-            let about_file = this._extensionPath + '/extension.about';
-            let about_data = Shell.get_file_contents_utf8_sync(about_file);
-            let label = new St.Label({ style_class: 'about-box-content', text: _(about_data) });
-
-            // create the icon
-            let evernote_gicon = new Gio.FileIcon({ file: Gio.file_new_for_path(GLib.build_filenamev([this._extensionPath, 'icons/evergnome.png']))});
-            let evernote_icon = new St.Icon({ icon_name: 'emblem-cm-symbolic', icon_size: 16 });
-            evernote_icon.set_gicon(evernote_gicon);
-
-            // create the box content
-            let content_box = new St.BoxLayout({ style_class: 'about-box-content' });
-            let content_message = this._errorMessage = new St.Label({ style_class: 'about-box-content-title', text: _(" Evergnome") });
-
-            // add the stuff to the content box
-            content_box.add(evernote_icon, { y_align: St.Align.MIDDLE });
-            content_box.add(content_message, { expand: true, y_align: St.Align.MIDDLE, y_fill: false });
-
-            // add it to the modal
-            this._about_modal.contentLayout.add(content_box, { expand: true });
-            this._about_modal.contentLayout.add(label, { expand: true });
-
-            // make the proper connections
-            this.actor.connect('key-press-event', Lang.bind(this, this._about_close_callback));
-        }
-
-        this._about_modal.open();
-        global.log(Clutter.Escape);
-        // auto close it in xx seconds
-        let loop = Mainloop.timeout_add(20*1000, Lang.bind(this, function(){
-            this._about_modal.close();
-            return true;
-        }));
-
+        //open https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome
+        let extension_github_uri = "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome";
+        Gio.app_info_launch_default_for_uri(extension_github_uri, global.create_app_launch_context());
     },
 
-    _about_close_callback: function(actor, event)
+    _sync_data_notebooks: function()
     {
-        let symbol = event.get_key_symbol();
-        let modifierState = event.get_state();
-
-        global.log(symbol);
-
-        if (symbol == Clutter.Escape)
-        {
-            this._about_modal.close();
-            //return true;
-        }
-    },
-
-    _synch_data: function()
-    {
-        // let command = "python " + this._extensionPath + "/PyEvergnome.py";
-        // let stdout = EvergnomeUtils.trySpawnCommandLine(command);
-
-        // let notebooksJsonFile = this._extensionPath + '/data/evernote/notebooks.json';
-        // let jsonRawData = Shell.get_file_contents_utf8_sync(notebooksJsonFile)
-        // let jsonData = JSON.parse(jsonRawData);
-        // let notebooks = jsonData.notebooks;
-
-        // this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        // for (let i = 0; i < notebooks.length; i++)
-        // {
-        //     let submenu = new PopupMenu.PopupSubMenuMenuItem(_(notebooks[i].name));
-
-        //     for (let x = 0; x < notebooks[i].notes.length; x++)
-        //     {
-        //         submenu.menu.addMenuItem(new PopupMenu.PopupMenuItem(_(notebooks[i].notes[x].title)));
-        //     }
-
-        //     this.menu.addMenuItem(submenu);
-        // }
-
-        // this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        // this.menu.addMenuItem(new PopupMenu.PopupMenuItem(_("About")));
-
+        // give space, to keep the same width as "last synch at..."
+        this._set_status_message("                                wait a few, synch in progress...");
+        // get and write the data
+        EvergnomeUtils.getNotesAsJsonCmd();
         // loop
         Mainloop.source_remove(this._mainloop);
         this._synch_event();
     },
 
+    _build_menu_notebooks: function()
+    {
+        let can_i_buld_it = true;
+        try
+        {
+            if(!this._data_notebooks)
+            {
+                can_i_buld_it = false;
+            }
+            if(this._data_notebooks.length <= 0)
+            {
+                can_i_buld_it = false;
+            }
+        }
+        catch(e)
+        {
+            global.log("_build_menu_notebooks : I cannot build the menu... yet: " + e.message);
+            can_i_buld_it = false;
+        }
+
+        if(can_i_buld_it)
+        {
+            // add a separator
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+            // create the menu for the notes
+            for (let i = 0; i < this._data_notebooks.length; i++)
+            {
+                let submenu = new PopupMenu.PopupSubMenuMenuItem(_(this._data_notebooks[i].name));
+
+                for (let x = 0; x < this._data_notebooks[i].notes.length; x++)
+                {
+                    submenu.menu.addMenuItem(new PopupMenu.PopupMenuItem(_(this._data_notebooks[i].notes[x].title)));
+                }
+
+                this.menu.addMenuItem(submenu);
+            }
+        }
+
+        let synch_at = EvergnomeUtils.getLocaleDateString();
+        this._set_status_message("last synch at " + synch_at);
+    },
+
+    _set_status_message: function(message)
+    {
+        this._title.setStatus(message);
+    },
+
     _synch_event: function()
     {
         // create new main loop
-        this._mainloop = Mainloop.timeout_add(360*1000, Lang.bind(this, function(){
-            global.log("loop....");
-            this._synch_data();
+        let seconds = 1000;
+        let minutes = 60*seconds;
+
+        // get interval refresh from settings
+        let refresh = EvergnomeUtils.settings_data().refresh_interval;
+
+        this._mainloop = Mainloop.timeout_add(refresh*minutes, Lang.bind(this, function(){
+            global.log(EvergnomeUtils.getLocaleDateString() + "_synch_event about to synch the data...");
+            this._sync_data_notebooks();
             return true;
         }));
     },
 
+    _manual_update_synch: function()
+    {
+        // synch the notebook data
+        this._sync_data_notebooks();
+    },
+
+    _setup_file_monitor: function()
+    {
+        // set the notebooks monitor
+        if(!this._notebooks_monitor)
+        {
+            // setup the monitor
+            let notebooks_file = Gio.file_new_for_path(EvergnomeUtils.getNotebookJsonFile());
+            this._notebooks_monitor = notebooks_file.monitor(Gio.FileMonitorFlags.NONE, null);
+            this._notebooks_monitor.connect('changed', Lang.bind(this, this._notebooks_file_changed));
+        }
+    },
+
+    _notebooks_file_changed: function()
+    {
+        // update the notebooks json data, whithoud executing the cmd
+        this._data_notebooks = EvergnomeUtils.getNotesAsJson();
+
+        // rebuild the menu if exists more than 1 element in the array
+        if(this._data_notebooks.length > 1)
+        {
+            this._destroy_menu();
+            this._build_menu();
+            // register the change
+            global.log(EvergnomeUtils.getLocaleDateString() + " data has changed... " + this._data_notebooks.length + " notebooks");
+        }
+    },
+
     destroy: function()
     {
-    	this.parent();
-    }
-});
+        // disconnect all callbacks
+        // todo
 
-// CHUM this.statusItem
+        // destroy all ui elements
+        // todo
+
+        this.parent();
+    }
+
+});

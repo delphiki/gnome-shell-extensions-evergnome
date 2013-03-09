@@ -1,22 +1,19 @@
 const Main = imports.ui.main;
 
 const Local = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Local.metadata['gettext-domain']).gettext;
 const EvergnomePanelMenu = Local.imports.evergnomePanelMenu.EvergnomePanelMenu;
 
 let _evergnomePanelMenu;
-let _extensionPath;
 
-function init(metadata)
-{
-	_extensionPath = metadata.path;
-}
+// dummy one
+function init(){}
 
 function enable()
 {
 	try
 	{
-		_evergnomePanelMenu = new EvergnomePanelMenu(_extensionPath);
-		_evergnomePanelMenu._synch_data();
+		_evergnomePanelMenu = new EvergnomePanelMenu();
 		Main.panel.addToStatusArea("evergnome", _evergnomePanelMenu, 0, "right");
 	}
 	catch(e)
@@ -29,5 +26,6 @@ function enable()
 
 function disable()
 {
+	//destroy it
 	_evergnomePanelMenu.destroy();
 }

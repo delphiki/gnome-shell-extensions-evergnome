@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-__author__  = "Alexis Tejeda <alexis.tejeda@gmail.com>"
-__version__ = ""
+__author__  = "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome"
+__version__ = "1"
 
 __all__     = ['PyEvergnome']
 
@@ -10,6 +10,8 @@ import os
 import hashlib
 import binascii
 import json
+
+from optparse import OptionParser
 
 try:
 	from evernote.api.client import EvernoteClient
@@ -28,9 +30,9 @@ except:
 
 class PyEvergnome(object):
 
-	def __init__(self):
+	def __init__(self, auth_token):
 		self.__base_path = os.path.join(os.path.dirname(__file__))
-		self.__auth_token = None
+		self.__auth_token = auth_token
 		self.__sandbox = False
 		self.__client = None
 		self.__user_store = None
@@ -59,8 +61,6 @@ class PyEvergnome(object):
 
 		self.notebooks_write_json()
 		self.error_write_json()
-
-		self.__auth_token = "S=s66:U=7136a9:E=14443474fe1:C=13ceb9623e1:P=1cd:A=en-devtoken:H=206b60125337cdb26cba970a0edf5253"
 
 	def configuration_read(self):
 		config_file = os.path.join(os.path.dirname(__file__), "data/configuration.json")
@@ -139,8 +139,15 @@ class PyEvergnome(object):
 
 if __name__ == '__main__':
 
+	parser = OptionParser("\n\t%prog -a {auth_token} ")
+	parser.add_option("-a", help = "Auth token", dest="auth_token")
+	(options, args) = parser.parse_args()
+	# if no argument is passed, exit
+	if not options.auth_token:
+		sys.exit(1)
+
 	try:
-		pyEvergnome = PyEvergnome()
+		pyEvergnome = PyEvergnome(options.auth_token)
 	except:
 		print "Fatal error! post this in github right away!"
 		exit(1)

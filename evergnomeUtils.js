@@ -1,6 +1,17 @@
 const Util = imports.misc.util;
 const GLib = imports.gi.GLib;
 
+const Shell = imports.gi.Shell;
+
+const Local = imports.misc.extensionUtils.getCurrentExtension();
+
+const Convenience = Local.imports.convenience;
+const Settings = Local.imports.settings;
+
+const _ = imports.gettext.domain(Local.metadata['gettext-domain']).gettext;
+
+let extensionPath = Local.path.toString() + "/";
+
 // trySpawn:
 // @argv: an argv array
 //
@@ -70,4 +81,76 @@ function trySpawnCommandLine(command_line)
     }
 
     return trySpawnDue(argv);
+}
+
+function settings_data()
+{
+    let settings = Convenience.getSettings();
+    let settings_data = Settings.getSettings(settings);
+    return settings_data
+}
+
+function getConfigurationJsonFile()
+{
+    // return the path
+    return extensionPath + '/data/configuration.json';
+}
+
+function getNotebookJsonData()
+{
+    // return the path
+    return JSON.parse('{ "notebooks" : [] }').notebooks;
+}
+
+function getNotebookJsonFile()
+{
+    // return the path
+    return extensionPath + '/data/evernote/notebooks.json';
+}
+
+function getLocaleDateString()
+{
+    try
+    {
+        return new Date().toLocaleString();
+    }
+    catch(e)
+    {
+        global.log("Error executing getLocaleDateString: " + e.message);
+        return "";
+    }
+}
+
+function getNotesAsJsonCmd()
+{
+    try
+    {
+        let command = "python " + extensionPath + "/PyEvergnome.py -a '" + settings_data().evernote_auth_token + "'";
+        let stdout = trySpawnCommandLine(command);
+        // if is not empty, register the output
+        if(stdout)
+        {
+            global.log(getLocaleDateString() + " Error executing getNotesAsJsonCmd: " + stdout);
+        }
+    }
+    catch(e)
+    {
+        global.log(getLocaleDateString() + " Error executing getNotesAsJsonCmd: " + e.message);
+    }
+}
+
+function getNotesAsJson()
+{
+    try
+    {
+        let jsonRawData = Shell.get_file_contents_utf8_sync(getNotebookJsonFile())
+        let jsonData = JSON.parse(jsonRawData);
+        let notebooks = jsonData.notebooks;
+        return notebooks;
+    }
+    catch(e)
+    {
+        global.log(getLocaleDateString() + " Error reading the notebooks.json file: " + e.message);
+        return getNotebookJsonData();
+    }
 }

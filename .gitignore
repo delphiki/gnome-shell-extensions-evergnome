@@ -41,5 +41,6 @@ Thumbs.db
 # Others #
 ##########
 thirdparty/
+data/
 evergnome.sublime-project
 evergnome.sublime-workspace

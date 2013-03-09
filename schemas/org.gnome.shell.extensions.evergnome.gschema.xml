@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schemalist gettext-domain="gnome3-evergnome">
+	<schema path="/org/gnome/shell/extensions/evergnome/" id="org.gnome.shell.extensions.evergnome">
+		<key type="s" name="settings-json">
+			<default>'
+				{
+					"evernote_auth_token": "get the token at https://www.evernote.com/api/DeveloperToken.action",
+					"refresh_interval": 15,
+					"editor": "emacs",
+					"html_mode": 0
+				}
+			'</default>
+			<summary>JSON settings</summary>
+			<description>Settings for EverGnome configuration.</description>
+		</key>
+	</schema>
+</schemalist>
