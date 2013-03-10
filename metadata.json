@@ -1,8 +1,7 @@
 {
-	"shell-version": ["3.6.2"],
-	"uuid": "evergnome@defnull.cl",
+	"uuid": "evergnome@dialectic-chaos.github.com",
 	"version" : 1,
-	"name": "Evergnome",
+	"name": "EverGnome",
 	"description": "A quick widget-like for read evernote notes",
 	"gettext-domain": "evergnome",
 	"url": "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome",

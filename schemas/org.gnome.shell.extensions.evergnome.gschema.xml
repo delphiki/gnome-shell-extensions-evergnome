@@ -7,7 +7,8 @@
 					"evernote_auth_token": "get the token at https://www.evernote.com/api/DeveloperToken.action",
 					"refresh_interval": 15,
 					"editor": "emacs",
-					"html_mode": 0
+					"html_mode": false,
+					"show_notifications" : true
 				}
 			'</default>
 			<summary>JSON settings</summary>

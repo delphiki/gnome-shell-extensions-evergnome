@@ -2,6 +2,8 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener
 
+const MessageTray = imports.ui.messageTray;
+
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Lang = imports.lang;
@@ -38,19 +40,20 @@ const EvergnomePanelMenu = new Lang.Class(
         this._mainloop = null;
         // stuff
         this._title = null;
+        this._show_notifications = null;
         this._settings = null;
         this._manual_update = null;
         this._about = null;
 
         // set data vars
         this._data_notebooks = EvergnomeUtils.getNotebookJsonData();
+        this._last_synch_date = "";
 
         // setup file monitor
         this._notebooks_monitor = null;
         this._setup_file_monitor();
 
         // build menu and synch data
-        this._build_menu();
         this._notebooks_file_changed();
         this._sync_data_notebooks();
     },
@@ -68,6 +71,12 @@ const EvergnomePanelMenu = new Lang.Class(
     {
         // separator
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+        // show notifications on/off
+        let show_notifications = EvergnomeUtils.settings_data().show_notifications;
+        this._show_notifications = new PopupMenu.PopupSwitchMenuItem(_("Show Notifications"), show_notifications);
+        this._show_notifications.connect("toggled", Lang.bind(this, this._show_notifications_set_callback));
+        this.menu.addMenuItem(this._show_notifications);
 
         // settings
         this._settings = new PopupMenu.PopupMenuItem(_("Settings"));
@@ -105,6 +114,11 @@ const EvergnomePanelMenu = new Lang.Class(
         this.menu.removeAll();
     },
 
+    _show_notifications_set_callback: function(item, state)
+    {
+        EvergnomeUtils.settings_save_show_notifications(state);
+    },
+
     _settings_callback: function()
     {
         let app = Shell.AppSystem.get_default().lookup_app("gnome-shell-extension-prefs.desktop");
@@ -124,7 +138,7 @@ const EvergnomePanelMenu = new Lang.Class(
     _sync_data_notebooks: function()
     {
         // give space, to keep the same width as "last synch at..."
-        this._set_status_message("                                wait a few, synch in progress...");
+        this._set_status_message("                               wait a few, synch in progress...", false);
         // get and write the data
         EvergnomeUtils.getNotesAsJsonCmd();
         // loop
@@ -171,13 +185,26 @@ const EvergnomePanelMenu = new Lang.Class(
             }
         }
 
-        let synch_at = EvergnomeUtils.getLocaleDateString();
-        this._set_status_message("last synch at " + synch_at);
+        this._last_synch_date = EvergnomeUtils.getLocaleDateString();
+        this._set_status_message("last synch at " + this._last_synch_date, true);
     },
 
-    _set_status_message: function(message)
+    _set_status_message: function(message, is_synched)
     {
-        this._title.setStatus(message);
+        // check if the title isn't null
+        if(this._title)
+        {
+            this._title.setStatus(message);
+        }
+
+        let show_notifications = EvergnomeUtils.settings_data().show_notifications;
+
+        if(is_synched && show_notifications)
+        {
+            let notification_source = new MessageTray.Source(_("evergnome"), 'evergnome');
+            Main.messageTray.add(notification_source);
+            notification_source.notify(new MessageTray.Notification(notification_source, _("EverGnome"), _(message), { body: _("'%s'").format(message) }));
+        }
     },
 
     _synch_event: function()
@@ -190,7 +217,7 @@ const EvergnomePanelMenu = new Lang.Class(
         let refresh = EvergnomeUtils.settings_data().refresh_interval;
 
         this._mainloop = Mainloop.timeout_add(refresh*minutes, Lang.bind(this, function(){
-            global.log(EvergnomeUtils.getLocaleDateString() + "_synch_event about to synch the data...");
+            global.log(EvergnomeUtils.getLocaleDateStringLog() + "_synch_event about to synch the data...");
             this._sync_data_notebooks();
             return true;
         }));
@@ -217,25 +244,55 @@ const EvergnomePanelMenu = new Lang.Class(
     _notebooks_file_changed: function()
     {
         // update the notebooks json data, whithoud executing the cmd
-        this._data_notebooks = EvergnomeUtils.getNotesAsJson();
 
-        // rebuild the menu if exists more than 1 element in the array
-        if(this._data_notebooks.length > 1)
+        let can_i_synch = true;
+
+        // control the file monitor updater
+        if(JSON.stringify(this._data_notebooks) == JSON.stringify(EvergnomeUtils.getNotesAsJson()))
         {
-            this._destroy_menu();
-            this._build_menu();
-            // register the change
-            global.log(EvergnomeUtils.getLocaleDateString() + " data has changed... " + this._data_notebooks.length + " notebooks");
+            can_i_synch = false;
+        }
+
+        if(can_i_synch)
+        {
+            this._data_notebooks = EvergnomeUtils.getNotesAsJson();
+
+            // rebuild the menu if exists more than 1 element in the array
+            if(this._data_notebooks.length > 1)
+            {
+                this._destroy_menu();
+                this._build_menu();
+                // register the change
+                global.log(EvergnomeUtils.getLocaleDateStringLog() + " data has changed... " + this._data_notebooks.length + " notebooks");
+            }
         }
     },
 
     destroy: function()
     {
         // disconnect all callbacks
-        // todo
+        this._show_notifications.disconnect(this._show_notifications_set_callback);
+        this._settings.disconnect(this._settings_callback);
+        this._manual_update.disconnect(this._manual_update_synch);
+        this._about.disconnect(this._about_callback);
+        this._notebooks_monitor.disconnect(this._notebooks_file_changed);
 
         // destroy all ui elements
-        // todo
+        this._mainloop.destroy();
+        this._title.destroy();
+        this._show_notifications.destroy();
+        this._settings.destroy();
+        this._manual_update.destroy();
+        this._about.destroy();
+        this._notebooks_monitor.destroy();
+        // set them to null
+        this._mainloop =  null;
+        this._title =  null;
+        this._show_notifications =  null;
+        this._settings =  null;
+        this._manual_update =  null;
+        this._about =  null;
+        this._notebooks_monitor =  null;
 
         this.parent();
     }

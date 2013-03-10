@@ -43,8 +43,6 @@ class PyEvergnome(object):
 		self.__error_list = None
 		# default initialization
 		self.default()
-		# read configuration
-		self.configuration_read()
 
 	def checkapi(self):
 		status = self.__user_store.checkVersion("Evernote EDAMTest (Python)", UserStoreConstants.EDAM_VERSION_MAJOR, UserStoreConstants.EDAM_VERSION_MINOR)
@@ -61,9 +59,6 @@ class PyEvergnome(object):
 
 		self.notebooks_write_json()
 		self.error_write_json()
-
-	def configuration_read(self):
-		config_file = os.path.join(os.path.dirname(__file__), "data/configuration.json")
 
 	def error_register(self, error_message, error_filter):
 		self.__error_list.append({ "message" :  error_message, "filter" :  error_filter })

@@ -11,6 +11,7 @@ const Settings = Local.imports.settings;
 const _ = imports.gettext.domain(Local.metadata['gettext-domain']).gettext;
 
 let extensionPath = Local.path.toString() + "/";
+let extensionName = "EverGnome";
 
 // trySpawn:
 // @argv: an argv array
@@ -90,6 +91,47 @@ function settings_data()
     return settings_data
 }
 
+function settings_data_save(jsondata)
+{
+    let settings = Convenience.getSettings();
+    settings.set_string("settings-json", JSON.stringify(jsondata));
+}
+
+function settings_save_auth_token(value)
+{
+    let jsondata = settings_data();
+    jsondata.evernote_auth_token = value;
+    settings_data_save(jsondata);
+}
+
+function settings_save_refresh_interval(value)
+{
+    let jsondata = settings_data();
+    jsondata.refresh_interval = value;
+    settings_data_save(jsondata);
+}
+
+function settings_save_editor(value)
+{
+    let jsondata = settings_data();
+    jsondata.editor = value;
+    settings_data_save(jsondata);
+}
+
+function settings_html_mode(value)
+{
+    let jsondata = settings_data();
+    jsondata.html_mode = value;
+    settings_data_save(jsondata);
+}
+
+function settings_save_show_notifications(value)
+{
+    let jsondata = settings_data();
+    jsondata.show_notifications = value;
+    settings_data_save(jsondata);
+}
+
 function getConfigurationJsonFile()
 {
     // return the path
@@ -119,6 +161,11 @@ function getLocaleDateString()
         global.log("Error executing getLocaleDateString: " + e.message);
         return "";
     }
+}
+
+function getLocaleDateStringLog()
+{
+    return getLocaleDateString() + " :: " + extensionName + " :: ";
 }
 
 function getNotesAsJsonCmd()
