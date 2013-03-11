@@ -84,6 +84,17 @@ function trySpawnCommandLine(command_line)
     return trySpawnDue(argv);
 }
 
+function openEditorNotebook(uri, title)
+{
+    let command = "python " + extensionPath + "/PyEvergnomeEditor.py -f " + uri + " -t '" + title + "'";
+    let stdout = trySpawnCommandLine(command);
+    // if is not empty, register the output
+    if(stdout)
+    {
+        global.log(getLocaleDateString() + " Error executing openEditorNotebook: " + stdout);
+    }
+}
+
 function settings_data()
 {
     let settings = Convenience.getSettings();
@@ -178,6 +189,24 @@ function getNotesAsJsonCmd()
         if(stdout)
         {
             global.log(getLocaleDateString() + " Error executing getNotesAsJsonCmd: " + stdout);
+        }
+    }
+    catch(e)
+    {
+        global.log(getLocaleDateString() + " Error executing getNotesAsJsonCmd: " + e.message);
+    }
+}
+
+function update_note_cmd(guid)
+{
+    try
+    {
+        let command = "python " + extensionPath + "/PyEvergnome.py -a '" + settings_data().evernote_auth_token + "' -u " + guid;
+        let stdout = trySpawnCommandLine(command);
+        // if is not empty, register the output
+        if(stdout)
+        {
+            global.log(getLocaleDateString() + " Error executing update_note_cmd: " + stdout);
         }
     }
     catch(e)

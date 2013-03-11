@@ -1,12 +1,12 @@
-#! /usr/bin/env python
-
 __author__  = "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome"
 __version__ = "1"
 
 __all__     = ['PyEvergnome']
 
-import sys
 import os
+import sys
+import time
+import math
 import hashlib
 import binascii
 import json
@@ -41,6 +41,7 @@ class PyEvergnome(object):
 		self.__evernote_data_path = None
 		self.__notebooks_list = None
 		self.__error_list = None
+		self.__notebooks_notes = None
 		# default initialization
 		self.default()
 
@@ -51,6 +52,7 @@ class PyEvergnome(object):
 	def connect(self):
 		self.__client = EvernoteClient(token=self.__auth_token, sandbox = self.__sandbox)
 		self.__user_store = self.__client.get_user_store()
+		self.__note_store = self.__client.get_note_store()
 
 	def default(self):
 		self.__evernote_data_path = os.path.join(os.path.dirname(__file__), "data/evernote/")
@@ -80,9 +82,15 @@ class PyEvergnome(object):
 		toJsonNotebooks = []
 
 		for notebook in notebooks:
-			toJsonNotebooks.append({ "name" : notebook.name, "guid" : notebook.guid, "notes" : self.notes_get_json_raw(notebook.guid) })
+			toJsonNotebooks.append(
+				{
+					"name" : notebook.name,
+					"guid" : notebook.guid,
+					"notes" : self.notes_get_json_raw(notebook.guid)
+				})
 
-		return json.dumps({ "notebooks" : toJsonNotebooks }, sort_keys = True, indent = 4, separators = (',', ': '))
+		self.__notebooks_notes = json.dumps({ "notebooks" : toJsonNotebooks }, sort_keys = True, indent = 4, separators = (',', ': '))
+		return self.__notebooks_notes
 
 	def notebooks_write_json(self):
 		if not os.path.exists(self.__evernote_data_path):
@@ -106,6 +114,7 @@ class PyEvergnome(object):
 		notebooks = self.__notebooks_list
 		for notebook in notebooks:
 			notebook_path = os.path.join(self.__evernote_data_path, notebook.guid)
+			temp_notes_json = None
 			if os.path.exists(notebook_path):
 				filename = notebook.guid + ".json"
 				filepath = os.path.join(self.__evernote_data_path, filename)
@@ -114,7 +123,6 @@ class PyEvergnome(object):
 				data_file.close()
 
 	def notes_get(self, guid):
-		self.__note_store =  self.__client.get_note_store()
 		note_filter = NoteStore.NoteFilter (None)
 		note_filter.notebookGuid = guid
 		note_list = self.__note_store.findNotes(note_filter, 0, Limit.EDAM_USER_NOTES_MAX)
@@ -125,20 +133,66 @@ class PyEvergnome(object):
 		toJsonNotes = []
 
 		for note in notes:
-			toJsonNotes.append({ "title" : note.title, "guid" : note.guid})
+			toJsonNotes.append(
+				{
+					"title" : note.title,
+					"guid" : note.guid,
+					"updated" : note.updated
+				})
 
 		return toJsonNotes
 
 	def notes_get_json(self, guid):
 		return json.dumps({ "notes" : self.notes_get_json_raw(guid) }, sort_keys = True, indent = 4, separators = (',', ': '))
 
+	def notebooks_notes_write_data(self):
+		jdata = json.loads(self.__notebooks_notes)
+		for notebook in jdata['notebooks']:
+			notebook_guid = notebook['guid']
+			for note in notebook['notes']:
+				note_guid = note['guid']
+				content = self.__note_store.getNoteContent(note_guid)
+				filepath = os.path.join(self.__evernote_data_path, notebook_guid, note_guid + ".html")
+				# write the content
+				data_file = open(filepath, "w")
+				data_file.write(content)
+				data_file.close()
+
+	def update_note(self, note_guid):
+		note = self.__note_store.getNote(note_guid, True, True, True, True)
+		notebook_guid = note.notebookGuid
+
+		note_file = os.path.join(self.__evernote_data_path, notebook_guid, note_guid + ".html")
+
+		updated_at = (math.trunc(os.path.getmtime(note_file))) * 1000
+
+		# if has same and equal timestamps, end the execution of the method
+		if(updated_at <= note.updated):
+			return
+
+		# get the note content
+		note_filepath = open(note_file,"r")
+		note_content = note_filepath.read();
+		note_filepath.close()
+
+		# update the note
+		try:
+			note.content = note_content
+			note.updated = updated_at
+			self.__note_store.updateNote(note)
+		except Exception, e:
+			print e
+
 if __name__ == '__main__':
 
 	parser = OptionParser("\n\t%prog -a {auth_token} ")
 	parser.add_option("-a", help = "Auth token", dest="auth_token")
+	parser.add_option("-u", help = "guid of the note to update", dest="update_note")
+
 	(options, args) = parser.parse_args()
 	# if no argument is passed, exit
 	if not options.auth_token:
+		pyEvergnome.error_register("no auth token")
 		sys.exit(1)
 
 	try:
@@ -154,12 +208,23 @@ if __name__ == '__main__':
 			pyEvergnome.error_register("Evernote API not up to date","evernote-api")
 			exit(1)
 
-		pyEvergnome.notebooks_get()
-		pyEvergnome.notebooks_write_json()
-		pyEvergnome.notebooks_write_dirs()
-		pyEvergnome.notes_write_json()
 
-	except:
+		if not options.update_note:
+			# synch the notebook and his notes
+			# get notebokos
+			pyEvergnome.notebooks_get()
+			# get notes and create the json data
+			pyEvergnome.notebooks_write_json()
+			# create the directories for notes
+			pyEvergnome.notebooks_write_dirs()
+			# write/re-write the notes
+			pyEvergnome.notebooks_notes_write_data()
+		else:
+			# update the note
+			pyEvergnome.update_note(options.update_note)
+
+	except Exception, e:
 		pyEvergnome.error_register("No internet access","network-no-internet")
+		print e
 		exit(1)
 

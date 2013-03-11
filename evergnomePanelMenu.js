@@ -20,6 +20,7 @@ const Local = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Local.metadata['gettext-domain']).gettext;
 
 const EvergnomeUtils = Local.imports.evergnomeUtils;
+const EvergnomePopMenuItem = Local.imports.evergnomePopMenuItem.EvergnomePopMenuItem;
 
 const EvergnomePanelMenu = new Lang.Class(
 {
@@ -162,7 +163,7 @@ const EvergnomePanelMenu = new Lang.Class(
         }
         catch(e)
         {
-            global.log("_build_menu_notebooks : I cannot build the menu... yet: " + e.message);
+            global.log(EvergnomeUtils.getLocaleDateStringLog() + "_build_menu_notebooks : I cannot build the menu... yet: " + e.message);
             can_i_buld_it = false;
         }
 
@@ -178,9 +179,14 @@ const EvergnomePanelMenu = new Lang.Class(
 
                 for (let x = 0; x < this._data_notebooks[i].notes.length; x++)
                 {
-                    submenu.menu.addMenuItem(new PopupMenu.PopupMenuItem(_(this._data_notebooks[i].notes[x].title)));
-                }
+                    let popMenuItem = new EvergnomePopMenuItem(
+                        _(this._data_notebooks[i].name),
+                        _(this._data_notebooks[i].notes[x].title),
+                        _(this._data_notebooks[i].guid),
+                        _(this._data_notebooks[i].notes[x].guid))
 
+                    submenu.menu.addMenuItem(popMenuItem);
+                }
                 this.menu.addMenuItem(submenu);
             }
         }
@@ -203,7 +209,7 @@ const EvergnomePanelMenu = new Lang.Class(
         {
             let notification_source = new MessageTray.Source(_("evergnome"), 'evergnome');
             Main.messageTray.add(notification_source);
-            notification_source.notify(new MessageTray.Notification(notification_source, _("EverGnome"), _(message), { body: _("'%s'").format(message) }));
+            notification_source.notify(new MessageTray.Notification(notification_source, _("EverGnome"), _(message), { body: _("'%s'").format("synched") }));
         }
     },
 
@@ -243,7 +249,7 @@ const EvergnomePanelMenu = new Lang.Class(
 
     _notebooks_file_changed: function()
     {
-        // update the notebooks json data, whithoud executing the cmd
+        // update the notebooks json data, whithout executing the cmd
 
         let can_i_synch = true;
 
