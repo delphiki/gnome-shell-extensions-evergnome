@@ -3,22 +3,33 @@ __version__ = "1"
 
 # http://arstechnica.com/information-technology/2009/07/how-to-build-a-desktop-wysiwyg-editor-with-webkit-and-html-5/2/
 
-import gtk
-import webkit
 import os
+import time
+import gtk
+import gio
+import webkit
+import glib
 
 from optparse import OptionParser
 
 class PyEvergnomeEditor(gtk.Window):
 
-  def __init__(self):
+  def __init__(self, filepath, title):
+
     gtk.Window.__init__(self)
+
+    self.filename = filepath
+    self.window_title = title
+    self.last_update = None
+    self.saved = False
+
     self.connect("destroy", gtk.main_quit)
     self.resize(800, 500)
-    self.filename = None
 
     self.editor = webkit.WebView()
     self.editor.set_editable(True)
+
+    self.status_bar = gtk.Statusbar()
 
     scroll = gtk.ScrolledWindow()
     scroll.add(self.editor)
@@ -35,16 +46,25 @@ class PyEvergnomeEditor(gtk.Window):
     self.layout.pack_start(self.toolbar1, False)
     self.layout.pack_start(self.toolbar2, False)
     self.layout.pack_start(scroll, True, True)
+    self.layout.pack_end(self.status_bar, False, True)
     self.add(self.layout)
+
+    # set file name and to open
+    self.set_file_to_open(self.filename, self.window_title)
 
   def set_file_to_open(self, filepath, title):
     # if exists open it
     if os.path.exists(filepath):
+          self.set_status_message(filepath)
           self.filename = filepath
           with open(filepath, "r") as fd:
             self.editor.load_html_string(fd.read(), "file:///")
           # set title
           self.set_title(title)
+
+  def set_status_message(self, filepath, message = ""):
+    self.last_update = time.ctime(os.path.getmtime(filepath))
+    self.status_bar.push(-1, " " + message +" Last update was at " + self.last_update)
 
   def generate_ui(self):
     ui_def = """
@@ -142,11 +162,11 @@ class PyEvergnomeEditor(gtk.Window):
     ui = gtk.UIManager()
     ui.insert_action_group(actions)
     ui.add_ui_from_string(ui_def)
+
     return ui
 
   def on_action(self, action):
-    self.editor.execute_script(
-      "document.execCommand('%s', false, false);" % action.get_name())
+    self.editor.execute_script("document.execCommand('%s', false, false);" % action.get_name())
 
   def on_paste(self, action):
     self.editor.paste_clipboard()
@@ -168,28 +188,14 @@ class PyEvergnomeEditor(gtk.Window):
     dialog.destroy()
 
   def on_insert_link(self, action):
-    dialog = gtk.Dialog("Enter a URL:", self, 0,
-      (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+    dialog = gtk.Dialog("Enter a URL:", self, 0,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 
     entry = gtk.Entry()
     dialog.vbox.pack_start(entry)
     dialog.show_all()
 
     if dialog.run() == gtk.RESPONSE_OK:
-      self.editor.execute_script(
-        "document.execCommand('createLink', true, '%s');" % entry.get_text())
-    dialog.destroy()
-
-  def on_open(self, action):
-    dialog = gtk.FileChooserDialog("Select an HTML file", self, gtk.FILE_CHOOSER_ACTION_OPEN,
-      (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-
-    if dialog.run() == gtk.RESPONSE_OK:
-      fn = dialog.get_filename()
-      if os.path.exists(fn):
-        self.filename = fn
-        with open(fn) as fd:
-          self.editor.load_html_string(fd.read(), "file:///")
+      self.editor.execute_script("document.execCommand('createLink', true, '%s');" % entry.get_text())
     dialog.destroy()
 
   def on_save(self, action):
@@ -215,12 +221,22 @@ class PyEvergnomeEditor(gtk.Window):
 
       note.write(html_content)
       note.close()
+      self.set_status_message(self.filename, "[ Saved ]")
+      self.saved = True
 
   def get_html(self):
     self.editor.execute_script('oldtitle=document.title;document.title=document.documentElement.innerHTML;')
     html = self.editor.get_main_frame().get_title()
     self.editor.execute_script('document.title=oldtitle;')
     return html
+
+# # standalone file monitor
+# def file_changed(arg1, arg2, arg3, arg4):
+#   print "changed"
+#   # if not self.saved:
+#   #   self.set_file_to_open(self.filename, self.window_title)
+#   #   self.set_status_message(self.filename, "[ Synched ]")
+#   #   self.saved = False
 
 if __name__ == '__main__':
 
@@ -233,8 +249,12 @@ if __name__ == '__main__':
   if not options.filepath or not options.title:
     sys.exit(1)
 
+  # file_monitor = gio.File(options.filepath).monitor_file(gio.FILE_MONITOR_NONE, None)
+  # file_monitor.connect("changed", file_changed)
+
   # create the object and open the windows
-  pyEvergnomeEditor = PyEvergnomeEditor()
+  pyEvergnomeEditor = PyEvergnomeEditor(options.filepath, options.title)
   pyEvergnomeEditor.show_all()
-  pyEvergnomeEditor.set_file_to_open(options.filepath, options.title)
+    # setup the file monitor
+
   gtk.main()
