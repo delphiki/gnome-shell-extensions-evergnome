@@ -179,7 +179,7 @@ class PyEvergnome(object):
 		try:
 			note.content = note_content
 			note.updated = updated_at
-			#self.__note_store.updateNote(note)
+			self.__note_store.updateNote(note)
 		except Exception, e:
 			print e
 
