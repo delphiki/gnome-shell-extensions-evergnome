@@ -47,3 +47,18 @@ As first release, the extension in compatible with Gnome-shell "3.4", "3.6", ful
 Please, refer to https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome/issues.
 
 
+## Screenshots ##
+
+
+![1](http://s22.postimg.org/7p1radq4h/Screenshot_from_2013_03_11_10_44_10.png)
+
+![2](http://s22.postimg.org/7dkaxm9oh/Screenshot_from_2013_03_11_10_44_25.png)
+
+![3](http://s22.postimg.org/bnyyt7erl/Screenshot_from_2013_03_11_10_45_41.png)
+
+![4](http://s22.postimg.org/981qt3m2p/Screenshot_from_2013_03_11_10_46_52.png)
+
+![5](http://s22.postimg.org/wnjnyg5tt/Screenshot_from_2013_03_11_10_49_11.png)
+
+![6](http://s22.postimg.org/i5mgqgeip/Screenshot_from_2013_03_11_10_51_05.png)
+
