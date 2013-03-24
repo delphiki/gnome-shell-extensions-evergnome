@@ -49,16 +49,16 @@ Please, refer to https://github.com/dialectic-chaos/gnome-shell-extensions-everg
 
 ## Screenshots ##
 
-
+<div align="center">
 ![1](http://s22.postimg.org/7p1radq4h/Screenshot_from_2013_03_11_10_44_10.png)
-
+<br/>
 ![2](http://s22.postimg.org/7dkaxm9oh/Screenshot_from_2013_03_11_10_44_25.png)
-
+<br/>
 ![3](http://s22.postimg.org/bnyyt7erl/Screenshot_from_2013_03_11_10_45_41.png)
-
+<br/>
 ![4](http://s22.postimg.org/981qt3m2p/Screenshot_from_2013_03_11_10_46_52.png)
-
+<br/>
 ![5](http://s22.postimg.org/wnjnyg5tt/Screenshot_from_2013_03_11_10_49_11.png)
-
+<br/>
 ![6](http://s22.postimg.org/i5mgqgeip/Screenshot_from_2013_03_11_10_51_05.png)
-
+</div>
