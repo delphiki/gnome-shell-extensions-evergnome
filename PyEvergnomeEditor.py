@@ -1,9 +1,12 @@
+# Intentionally break the 80 chars limit for easy code reading
+
 __author__  = "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome"
 __version__ = "1"
 
 # http://arstechnica.com/information-technology/2009/07/how-to-build-a-desktop-wysiwyg-editor-with-webkit-and-html-5/2/
 
 import os
+import sys
 import time
 import gtk
 import gio
