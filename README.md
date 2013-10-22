@@ -30,7 +30,7 @@ Go to https://extensions.gnome.org/.
 In order to update the extension, go to https://extensions.gnome.org/local/ and press the blue icon of EverGnome extension.
 
 ### Compatibility  ###
-As first release, the extension in compatible with Gnome-shell "3.4", "3.6", fully tested in Fedora 18 3.7.2-204.fc18.i686.PAE #1 SMP Wed Jan 16 16:31:26 UTC 2013 i686 i686 i386 GNU/Linux.
+As first release, the extension in compatible with Gnome-shell "3.4", "3.6", "3.7", "3.8" fully tested in Fedora 18 3.7.2-204.fc18.i686.PAE #1 SMP Wed Jan 16 16:31:26 UTC 2013 i686 i686 i386 GNU/Linux.
 
 ## Extension Settings ##
 *   Evernote Auth Token: This can be accessed in via extension settings, to get your auth token go to https://www.evernote.com/api/DeveloperToken.action, you can manually update/synch the notebooks or wait "Refresh every" minutes.
@@ -46,19 +46,18 @@ As first release, the extension in compatible with Gnome-shell "3.4", "3.6", ful
 ## Bugs and issues ##
 Please, refer to https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome/issues.
 
-
 ## Screenshots ##
 
 <div align="center">
-![1](http://s22.postimg.org/7p1radq4h/Screenshot_from_2013_03_11_10_44_10.png)
+<img src="http://s22.postimg.org/7p1radq4h/Screenshot_from_2013_03_11_10_44_10.png />
 <br/>
-![2](http://s22.postimg.org/7dkaxm9oh/Screenshot_from_2013_03_11_10_44_25.png)
+<img src="http://s22.postimg.org/7dkaxm9oh/Screenshot_from_2013_03_11_10_44_25.png />
 <br/>
-![3](http://s22.postimg.org/bnyyt7erl/Screenshot_from_2013_03_11_10_45_41.png)
+<img src="http://s22.postimg.org/bnyyt7erl/Screenshot_from_2013_03_11_10_45_41.png />
 <br/>
-![4](http://s22.postimg.org/981qt3m2p/Screenshot_from_2013_03_11_10_46_52.png)
+<img src="http://s22.postimg.org/981qt3m2p/Screenshot_from_2013_03_11_10_46_52.png />
 <br/>
-![5](http://s22.postimg.org/wnjnyg5tt/Screenshot_from_2013_03_11_10_49_11.png)
+<img src="http://s22.postimg.org/wnjnyg5tt/Screenshot_from_2013_03_11_10_49_11.png />
 <br/>
-![6](http://s22.postimg.org/i5mgqgeip/Screenshot_from_2013_03_11_10_51_05.png)
+<img src="http://s22.postimg.org/i5mgqgeip/Screenshot_from_2013_03_11_10_51_05.png />
 </div>
