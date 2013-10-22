@@ -5,6 +5,6 @@
 	"description": "A quick widget-like for read evernote notes",
 	"gettext-domain": "evergnome",
 	"url": "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome",
-	"shell-version": [ "3.4", "3.6"],
+	"shell-version": [ "3.4", "3.6", "3.7", "3.8"],
 	"settings-schema": "org.gnome.shell.extensions.evergnome"
 }

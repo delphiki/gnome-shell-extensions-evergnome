@@ -1,3 +1,5 @@
+# Intentionally break the 80 chars limit for easy code reading
+
 __author__  = "https://github.com/dialectic-chaos/gnome-shell-extensions-evergnome"
 __version__ = "1"
 
@@ -46,7 +48,10 @@ class PyEvergnome(object):
 		self.default()
 
 	def checkapi(self):
-		status = self.__user_store.checkVersion("Evernote EDAMTest (Python)", UserStoreConstants.EDAM_VERSION_MAJOR, UserStoreConstants.EDAM_VERSION_MINOR)
+		status = self.__user_store.checkVersion(
+                        "Evernote EDAMTest (Python)", 
+                        UserStoreConstants.EDAM_VERSION_MAJOR, 
+                        UserStoreConstants.EDAM_VERSION_MINOR)
 		return status
 
 	def connect(self):
@@ -87,14 +92,13 @@ class PyEvergnome(object):
 					"name" : notebook.name,
 					"guid" : notebook.guid,
 					"notes" : self.notes_get_json_raw(notebook.guid)
-				})
+                                        })
 
 		self.__notebooks_notes = json.dumps({ "notebooks" : toJsonNotebooks }, sort_keys = True, indent = 4, separators = (',', ': '))
 		return self.__notebooks_notes
 
 	def notebooks_write_json(self):
-		if not os.path.exists(self.__evernote_data_path):
-				os.makedirs(self.__evernote_data_path)
+		if not os.path.exists(self.__evernote_data_path): os.makedirs(self.__evernote_data_path)
 
 		jsonNotebooks = self.notebooks_get_json()
 		filename = "notebooks.json"
@@ -138,8 +142,7 @@ class PyEvergnome(object):
 					"title" : note.title,
 					"guid" : note.guid,
 					"updated" : note.updated
-				})
-
+                                })
 		return toJsonNotes
 
 	def notes_get_json(self, guid):
@@ -207,7 +210,6 @@ if __name__ == '__main__':
 		if not pyEvergnome.checkapi():
 			pyEvergnome.error_register("Evernote API not up to date","evernote-api")
 			exit(1)
-
 
 		if not options.update_note:
 			# synch the notebook and his notes
