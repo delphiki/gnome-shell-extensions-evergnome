@@ -51,7 +51,7 @@ function widget_initliaze()
     // refresh time
     refresh_box = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL});
     refresh_label = new Gtk.Label({label: "Refresh every (minutes) ", xalign: 0});
-    refresh_input = new Gtk.HScale.new_with_range(5, 90, 5);
+    refresh_input = Gtk.HScale.new_with_range(5, 90, 5);
 
     // editor
     editor_box = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL});
